@@ -19,7 +19,7 @@ Search and book flights, trains and buses across India, with seat inventory that
 - "My trips" page that lists a traveller's reservations and cancels them before departure, returning the seats to inventory
 - Simple traveller registration
 - Request validation with zod and consistent JSON errors (400 / 404 / 409)
-- Seed data generated with a recursive CTE: a fictional daily timetable expanded over the next 14 days
+- Seed data built with a recursive CTE: a fictional daily timetable expanded over the next 14 days
 
 Scope note: there is no authentication. A traveller is identified by email only, which keeps the demo simple but means anyone who knows a reservation id can cancel it.
 
