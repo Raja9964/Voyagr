@@ -1,0 +1,38 @@
+{
+  "name": "voyagr-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "REST API for Voyagr: trip search, seat booking and cancellations on MySQL",
+  "license": "MIT",
+  "author": "Raja Mohamad",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env src/index.ts",
+    "dev": "node --watch --env-file-if-exists=.env src/index.ts",
+    "db:init": "node --env-file-if-exists=.env scripts/db-init.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "helmet": "^8.3.0",
+    "mysql2": "^3.24.5",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.19.1",
+    "@types/supertest": "^7.2.1",
+    "oxlint": "^1.86.0",
+    "supertest": "^7.3.1",
+    "typescript": "~6.0",
+    "vitest": "^5.0.3"
+  }
+}
