@@ -98,7 +98,7 @@ export function MyTripsPage() {
         {user.data && reservations.data && (
           <>
             <p className="text-sm text-slate-600">
-              Signed in as <strong>{user.data.name}</strong>
+              Showing reservations for <strong>{user.data.name}</strong>
             </p>
             {reservations.data.length === 0 ? (
               <EmptyState title="No reservations yet">
