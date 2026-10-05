@@ -10,7 +10,7 @@ const POPULAR_ROUTES = [
 ]
 
 const HIGHLIGHTS = [
-  { icon: Ticket, title: 'Live seat counts', text: 'Availability comes straight from the database at search time.' },
+  { icon: Ticket, title: 'Live seat counts', text: 'Seats are checked when you search and again when you book.' },
   { icon: BadgeCheck, title: 'No double booking', text: 'Seats are reserved inside a locked transaction.' },
   { icon: RotateCcw, title: 'Cancel before departure', text: 'Cancelled seats go straight back on sale.' },
 ]

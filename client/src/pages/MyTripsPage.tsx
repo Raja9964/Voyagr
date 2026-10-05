@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { TripTimeline } from '../components/TripCard'
 import { Card, EmptyState, ErrorState, ModeIcon, Spinner } from '../components/ui'
+import { SAMPLE_TRAVELLERS } from '../demo/seed'
 import { buttonClass, inputClass } from '../lib/styles'
 import { api } from '../lib/api'
 import { formatPrice } from '../lib/format'
@@ -80,6 +81,11 @@ export function MyTripsPage() {
     setParams(input ? { email: input.trim() } : {})
   }
 
+  function showSample(sample: string) {
+    setInput(sample)
+    setParams({ email: sample })
+  }
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
       <h1 className="text-2xl font-bold">My trips</h1>
@@ -90,6 +96,21 @@ export function MyTripsPage() {
           <Search className="size-4" /> Find
         </button>
       </form>
+      {import.meta.env.VITE_DEMO === 'true' && (
+        <p className="mt-3 flex flex-wrap items-center gap-2 text-sm text-slate-500">
+          Sample travellers:
+          {SAMPLE_TRAVELLERS.map((sample) => (
+            <button
+              key={sample}
+              type="button"
+              onClick={() => showSample(sample)}
+              className="rounded-full border border-slate-200 bg-white px-2.5 py-0.5 font-medium text-teal-700 transition hover:border-teal-600"
+            >
+              {sample}
+            </button>
+          ))}
+        </p>
+      )}
 
       <div className="mt-8 space-y-4">
         {(user.isFetching || reservations.isPending) && user.fetchStatus !== 'idle' && <Spinner label="Looking up your trips" />}

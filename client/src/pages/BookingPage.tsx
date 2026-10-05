@@ -5,6 +5,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { TripTimeline } from '../components/TripCard'
 import { Card, ErrorState, Field, ModeIcon, Spinner } from '../components/ui'
 import { MODE_LABELS, buttonClass, inputClass } from '../lib/styles'
+import { SAMPLE_TRAVELLERS } from '../demo/seed'
 import { ApiError, api } from '../lib/api'
 import { formatPrice } from '../lib/format'
 import type { User } from '../lib/types'
@@ -86,7 +87,14 @@ export function BookingPage() {
             </div>
           ) : (
             <form onSubmit={onIdentify} className="mt-4 space-y-4">
-              <Field label="Email">
+              <Field
+                label="Email"
+                hint={
+                  import.meta.env.VITE_DEMO === 'true'
+                    ? `Try ${SAMPLE_TRAVELLERS[0]}, or any email to add a new traveller.`
+                    : undefined
+                }
+              >
                 <input
                   type="email"
                   required
