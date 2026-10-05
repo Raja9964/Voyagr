@@ -1,8 +1,12 @@
 # Voyagr
 
+**[▶ Live demo](https://raja9964.github.io/Voyagr/)**
+
 Search and book flights, trains and buses across India, with seat inventory that can't be oversold.
 
 [![CI](https://github.com/Raja9964/Voyagr/actions/workflows/ci.yml/badge.svg)](https://github.com/Raja9964/Voyagr/actions/workflows/ci.yml)
+
+The live demo runs entirely in your browser with sample data, using the server's own booking logic. The full app runs on Express and MySQL.
 
 | Search | Results |
 | --- | --- |
@@ -20,6 +24,7 @@ Search and book flights, trains and buses across India, with seat inventory that
 - Simple traveller registration
 - Request validation with zod and consistent JSON errors (400 / 404 / 409)
 - Seed data built with a recursive CTE: a fictional daily timetable expanded over the next 14 days
+- A live demo on GitHub Pages that runs the same services and validation in the browser, with no backend to host (see [How the live demo works](#how-the-live-demo-works))
 
 Scope note: there is no authentication. A traveller is identified by email only, which keeps the demo simple but means anyone who knows a reservation id can cancel it.
 
@@ -31,7 +36,7 @@ Scope note: there is no authentication. A traveller is identified by email only,
 | Server | Node.js 24 (native TypeScript), Express 5, mysql2 (promise pool), zod, helmet, cors |
 | Database | MySQL 8 |
 | Testing | Vitest, Supertest, real-MySQL integration tests |
-| CI | GitHub Actions with a MySQL 8 service container |
+| CI | GitHub Actions with a MySQL 8 service container; a Pages workflow deploys the demo |
 
 ## Architecture
 
@@ -45,13 +50,21 @@ flowchart LR
     Routes["routes + zod schemas"] --> Services["services<br/>(booking rules)"]
     Services --> Store["Store interface"]
     Store --> MySqlStore["MySQL repositories"]
-    Store -. tests .-> MemoryStore["in-memory repositories"]
+    Store -. "tests, demo" .-> MemoryStore["in-memory repositories"]
     Routes -.-> ErrorHandler["central error handler"]
   end
   MySqlStore -- "mysql2 pool" --> DB[(MySQL 8)]
 ```
 
-Routes parse and validate input, services hold the business rules (seat checks, departure checks, cancellation), and repositories own SQL. Services depend on a `Store` interface with a `transaction()` method, so the same booking code runs against MySQL in production and an in-memory store in route tests.
+Routes parse and validate input, services hold the business rules (seat checks, departure checks, cancellation), and repositories own SQL. Services depend on a `Store` interface with a `transaction()` method, so the same booking code runs against MySQL in production and an in-memory store in route tests and the live demo.
+
+### How the live demo works
+
+The GitHub Pages build sets `VITE_DEMO=true`. `lib/api.ts` then hands each `/api` request to `client/src/demo/backend.ts` instead of the network. That file routes the request to the server's own services, zod schemas and in-memory store, imported through a Vite alias, so status codes, validation messages and booking rules match the real API.
+
+- **Seed data:** a port of `seed.sql` (same timetable, operators, fares and sample bookings), generated relative to today so there are always upcoming trips. Tests check it against values MySQL produces from `seed.sql`.
+- **Persistence:** travellers and reservations are saved in the browser's localStorage. Nothing you type is sent to a server. **Reset data** in the demo banner restores the sample data.
+- **Routing:** the demo build uses hash routes (`#/trips?...`), so deep links and page refreshes work on static hosting.
 
 ## Data model
 
@@ -101,6 +114,7 @@ All `DATETIME` columns hold UTC. The schema backs up the application rules with 
 ├── client/                 React app
 │   └── src/
 │       ├── components/     layout, search form, trip card, UI states
+│       ├── demo/           in-browser API, seed and storage for the live demo
 │       ├── lib/            API client, types, formatting
 │       └── pages/          home, results, booking, confirmation, my trips, register
 ├── server/
@@ -114,22 +128,22 @@ All `DATETIME` columns hold UTC. The schema backs up the application rules with 
 │   │   ├── app.ts          builds the Express app from a Store
 │   │   └── index.ts        wires config, pool and server
 │   └── test/               API tests (in-memory) and MySQL integration tests
-└── .github/workflows/ci.yml
+└── .github/workflows/      ci.yml (tests), pages.yml (live demo deploy)
 ```
 
-## Getting started
+## Run it locally
 
 Requirements: Node.js 22.18+ (24 recommended, the server runs TypeScript natively) and MySQL 8.0.16+.
 
-**1. Create a database user** (in the MySQL shell, as an admin):
+**1. Create a database and user** (in the MySQL shell, as an admin):
 
 ```sql
 CREATE DATABASE voyagr CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-CREATE USER 'voyagr'@'localhost' IDENTIFIED BY 'choose-a-password';
-GRANT ALL PRIVILEGES ON voyagr.* TO 'voyagr'@'localhost';
+CREATE USER 'voyagr'@'%' IDENTIFIED BY 'choose-a-password';
+GRANT ALL PRIVILEGES ON voyagr.* TO 'voyagr'@'%';
 ```
 
-**2. Start the API** on http://localhost:8102:
+**2. Start the API** (it listens on port 8102):
 
 ```bash
 cd server
@@ -139,7 +153,7 @@ npm run db:init             # drops and recreates tables, loads demo data
 npm run dev
 ```
 
-**3. Start the client** on http://localhost:5102:
+**3. Start the client** (Vite serves it on port 5102):
 
 ```bash
 cd client
@@ -147,7 +161,14 @@ npm install
 npm run dev
 ```
 
-The Vite dev server proxies `/api` to port 8102, so no CORS setup is needed locally. Demo travellers: `asha@example.com` and `vikram@example.com`.
+The Vite dev server proxies `/api` to the API on port 8102, so no CORS setup is needed. Demo travellers: `asha@example.com` and `vikram@example.com`.
+
+To try the client without the API or MySQL, start it in demo mode instead:
+
+```bash
+cd client
+VITE_DEMO=true npm run dev
+```
 
 ## Configuration
 
@@ -156,8 +177,8 @@ Server (`server/.env`):
 | Variable | Default | Description |
 | --- | --- | --- |
 | `PORT` | `8102` | API port |
-| `CLIENT_ORIGIN` | `http://localhost:5102` | Comma-separated origins allowed by CORS |
-| `DB_HOST` | `127.0.0.1` | MySQL host |
+| `CLIENT_ORIGIN` | the Vite dev server (port 5102) | Comma-separated origins allowed by CORS |
+| `DB_HOST` | this machine | MySQL host |
 | `DB_PORT` | `3306` | MySQL port |
 | `DB_USER` | `voyagr` | MySQL user |
 | `DB_PASSWORD` | empty | MySQL password |
@@ -170,6 +191,7 @@ Client (`client/.env`):
 | Variable | Default | Description |
 | --- | --- | --- |
 | `VITE_API_URL` | empty | API origin for production builds. Leave empty in development to use the Vite proxy. |
+| `VITE_DEMO` | empty | Set to `true` to run the in-browser demo API instead of calling the server |
 
 ## API reference
 
@@ -210,22 +232,22 @@ npm run typecheck
 npm run lint
 ```
 
-To include the MySQL integration tests, point the tests at a server. They create and wipe their own database (`TEST_DB_NAME`, default `voyagr_test`):
+The MySQL integration tests run when `DB_HOST` is set. Point them at a MySQL 8 server; they create and wipe their own database (`TEST_DB_NAME`, default `voyagr_test`):
 
 ```bash
-DB_HOST=127.0.0.1 DB_PORT=3306 DB_USER=root DB_PASSWORD=secret npm test
+DB_HOST=your-mysql-host DB_PORT=3306 DB_USER=root DB_PASSWORD=secret npm test
 ```
 
 The integration suite checks SQL filtering, the unique email constraint, rollback on failure, schema constraints, and fires 12 concurrent booking requests at a trip with 5 seats to confirm exactly 5 succeed.
 
 ```bash
 cd client
-npm test
+npm test                    # formatting helpers and the demo backend
 npm run lint
 npm run build
 ```
 
-CI runs all of the above on every push and pull request, with MySQL 8 as a service container.
+CI runs all of the above on every push and pull request, with MySQL 8 as a service container. The Pages workflow builds the demo (`VITE_DEMO=true`) and deploys it to GitHub Pages on every push to `main`.
 
 ## License
 
