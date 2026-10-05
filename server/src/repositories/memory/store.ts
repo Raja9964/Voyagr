@@ -2,7 +2,7 @@ import type { Reservation, ReservationWithTrip, Trip, TripSort, User } from '../
 import { ConflictError } from '../../errors.ts';
 import type { Repositories, Store } from '../types.ts';
 
-// Behaves like the MySQL store closely enough for route and service tests:
+// Behaves like the MySQL store closely enough for route tests and the in-browser demo:
 // transactions run one at a time and roll back on error.
 
 interface State {

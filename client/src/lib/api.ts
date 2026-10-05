@@ -13,13 +13,21 @@ export class ApiError extends Error {
   }
 }
 
+async function send(path: string, init?: RequestInit): Promise<Response> {
+  if (import.meta.env.VITE_DEMO === 'true') {
+    const { demoFetch } = await import('../demo/backend')
+    return demoFetch(path, init)
+  }
+  return fetch(`${BASE_URL}/api${path}`, {
+    ...init,
+    headers: { 'Content-Type': 'application/json', ...init?.headers },
+  })
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let response: Response
   try {
-    response = await fetch(`${BASE_URL}/api${path}`, {
-      ...init,
-      headers: { 'Content-Type': 'application/json', ...init?.headers },
-    })
+    response = await send(path, init)
   } catch {
     throw new ApiError(0, 'Could not reach the server. Check your connection and try again.')
   }
